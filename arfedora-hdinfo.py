@@ -21,25 +21,24 @@
 #  MA 02110-1301, USA.
 #  
 #  require python3-dbus
-import string
 import dbus
 import math
 
 
-            
 def get_all_devices():
 	bus = dbus.SystemBus()
 	result  = []
-	for char in string.ascii_lowercase :
-		try:
-			object_   = bus.get_object("org.freedesktop.UDisks2","/org/freedesktop/UDisks2/block_devices/sd{}".format(char))
-			interface = dbus.Interface(object_,"org.freedesktop.DBus.Properties")
+	object_   = bus.get_object("org.freedesktop.UDisks2","/org/freedesktop/UDisks2")
+	for i in object_.get_dbus_method("GetManagedObjects","org.freedesktop.DBus.ObjectManager")():
+		if i.startswith("/org/freedesktop/UDisks2/block_devices/") and i[39:-1]=="sd":
+			ob        = bus.get_object("org.freedesktop.UDisks2",i)
+			interface = dbus.Interface(ob,"org.freedesktop.DBus.Properties")
 			drive=interface.Get("org.freedesktop.UDisks2.Block","Drive")
-			
-			result.append(["/dev/sd{}".format(char),drive])
-		except :
-		    pass
+			result.append(["/dev/{}".format(i[39:]),drive])
+
 	return result
+	
+
  
 def get_drives_info(drives):
 	bus = dbus.SystemBus()
